@@ -14,9 +14,9 @@
     </parent>
 
     <groupId>ac2_project.example</groupId>
-    <artifactId>ac2_ca</artifactId>
+    <artifactId>pratica4_ac2</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>ac2_ca</name>
+    <name>pratica4_ac2</name>
     <description>Demo project for Spring Boot</description>
 
     <properties>
@@ -67,6 +67,12 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.5.0</version> 
         </dependency>
     </dependencies>
 

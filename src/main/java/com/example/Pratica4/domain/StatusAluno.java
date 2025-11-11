@@ -1,11 +1,19 @@
 package com.example.Pratica4.domain;
 
+import jakarta.persistence.Embeddable;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Embeddable
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class StatusAluno {
 
     private static final int CURSOS_PREMIUM = 12;
 
-    private final int cursosConcluidos;
-    private final boolean premium;
+    private int cursosConcluidos;
+    private boolean premium;
 
     private StatusAluno(int cursosConcluidos) {
         this.cursosConcluidos = cursosConcluidos;
@@ -20,18 +28,6 @@ public class StatusAluno {
         return new StatusAluno(totalCursos);
     }
 
-    public int getCursosConcluidos() {
-        return cursosConcluidos;
-    }
-
-    public int getCursos() {
-        return this.cursosConcluidos;
-    }
-
-    public boolean isPremium() {
-        return premium;
-    }
-
     public StatusAluno adicionarCurso() {
         return new StatusAluno(this.cursosConcluidos + 1);
     }
@@ -41,11 +37,11 @@ public class StatusAluno {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         StatusAluno that = (StatusAluno) o;
-        return cursosConcluidos == that.cursosConcluidos;
+        return cursosConcluidos == that.cursosConcluidos && premium == that.premium;
     }
 
     @Override
     public int hashCode() {
-        return Integer.hashCode(cursosConcluidos);
+        return java.util.Objects.hash(cursosConcluidos, premium);
     }
 }

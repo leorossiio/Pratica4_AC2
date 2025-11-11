@@ -1,39 +1,49 @@
 package com.example.Pratica4.domain;
 
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+
+@Entity
+@Table(name = "alunos")
+@Getter
+@NoArgsConstructor
+@ToString(exclude = {"status"})
 public class Aluno {
 
-    private String nome;
-    private StatusAluno status;
-    private boolean premium;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
+    private String nome;
+
+    @Embedded
+    private StatusAluno status;
+    
     public Aluno(String nome, int cursosConcluidos) {
+        if (nome == null || nome.trim().isEmpty()) {
+            throw new IllegalArgumentException("Nome não pode ser nulo ou vazio");
+        }
         this.nome = nome;
         this.status = StatusAluno.comCursos(cursosConcluidos);
-        this.premium = this.status.isPremium();
     }
 
-    public String getNome() {
-        return nome;
+    public void registrarParticipacaoNoForum(String mensagem) {
+        this.status = this.status.adicionarCurso();
     }
-
-    public int getCursosConcluidos() {
-        return this.status.getCursosConcluidos();
-    }
-
+    
     public boolean isPremium() {
-        return this.premium;
+        if (this.status == null) {
+            return false;
+        }
+        return this.status.isPremium();
     }
-
-    public void setPremium(boolean premium) {
-        this.premium = premium;
-    }
-
-    public StatusAluno getStatus() {
-        return this.status;
-    }
-
-    public void setStatus(StatusAluno novoStatus) {
-        this.status = novoStatus;
-        this.premium = novoStatus.isPremium();
+    
+    public int getCursosConcluidos() {
+        if (this.status == null) {
+            return 0;
+        }
+        return this.status.getCursosConcluidos();
     }
 }

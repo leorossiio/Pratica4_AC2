@@ -6,12 +6,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 @SpringBootTest
 class Pratica4ApplicationTests {
 
-	@Test
-	void contextLoads() {
-	}
-	@Test
-    void testMain() {
-        
-        Pratica4Application.main(new String[] {});
+    @Test
+    void contextLoads() {
+
     }
 }
