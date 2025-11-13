@@ -1,35 +1,69 @@
 pipeline {
-  agent any
+    agent any
 
-  stages {
-    stage('Checkout') {
-      steps {
-        checkout scm
-      }
+    // ATENÇÃO: Verifique se o nome 'Maven-3.9' bate com o seu "Global Tool Configuration" no Jenkins.
+    // Se o Maven já estiver no PATH do Windows, pode apagar este bloco 'tools'.
+    tools {
+        maven 'Maven-3.9'
+        jdk 'JDK-17' 
     }
 
-    stage('Start container') {
-      steps {
-        echo 'Starting container from Docker Hub...'
-        bat 'docker-compose -f docker-compose.staging.yml pull' // Baixa a imagem do Docker Hub
-        bat 'docker-compose -f docker-compose.staging.yml up -d --no-color'
-        sleep time: 60, unit: 'SECONDS' // Aumenta o tempo para o serviço Spring Boot iniciar
-        bat 'docker-compose -f docker-compose.staging.yml logs' // Verifica os logs para conferir o status do Spring Boot
-        bat 'docker-compose -f docker-compose.staging.yml ps' // Verifica o status do container
-      }
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        // --- ETAPA CRÍTICA PARA O JACOCO ---
+        stage('Unit Tests & Coverage') {
+            steps {
+                echo 'Executando testes unitários e gerando dados de cobertura...'
+                // Este comando roda os testes e o plugin do jacoco (configurado no pom) gera o .exec
+                bat 'mvn clean test' 
+            }
+            post {
+                always {
+                    // O passo 'junit' mostra o gráfico de testes (quantos passaram/falharam)
+                    junit 'target/surefire-reports/*.xml'
+                    
+                    // O passo 'jacoco' lê o binário e gera o relatório de cobertura no Jenkins
+                    jacoco(
+                        execPattern: 'target/*.exec', 
+                        classPattern: 'target/classes',
+                        sourcePattern: 'src/main/java',
+                        exclusionPattern: 'src/test*'
+                    )
+                }
+            }
+        }
+        // -----------------------------------
+
+        stage('Start container') {
+            steps {
+                echo 'Subindo container (Deploy)...'
+                bat 'docker-compose -f docker-compose.staging.yml pull'
+                bat 'docker-compose -f docker-compose.staging.yml up -d --no-color'
+                
+                // Aguarda o Spring Boot iniciar
+                sleep time: 60, unit: 'SECONDS' 
+                
+                bat 'docker-compose -f docker-compose.staging.yml logs'
+                bat 'docker-compose -f docker-compose.staging.yml ps'
+            }
+        }
+
+        stage('Run tests against the container') {
+            steps {
+                // Teste de integração simples (Smoke Test)
+                bat 'curl http://localhost:8686 || echo "Service not responding"'
+            }
+        }
     }
 
-    stage('Run tests against the container') {
-      steps {
-        bat 'curl http://localhost:8686 || echo "Service not responding"'
-      }
+    post {
+        always {
+            echo 'Pipeline finalizado.'
+        }
     }
-  }
-
-  post {
-    always {
-      echo 'Pipeline completed'
-      // Não derruba mais o container aqui
-    }
-  }
 }
