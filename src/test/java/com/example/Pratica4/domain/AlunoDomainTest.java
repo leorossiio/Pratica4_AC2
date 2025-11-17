@@ -48,6 +48,16 @@ class AlunoTest {
     }
 
     @Test
+    void testIsPremiumComStatusNulo() {
+        // Arrange
+        Aluno aluno = new Aluno();
+        aluno.setId(99L);
+
+        // Act & Assert
+        assertFalse(aluno.isPremium()); 
+    }
+
+    @Test
     void testParticiparForumTornaPremium() {
         // Arrange
         Aluno aluno = new Aluno("Joao", 11);
@@ -87,8 +97,6 @@ class AlunoTest {
         assertEquals(status1.hashCode(), status2.hashCode());
     }
 
-    // Adicionar estes métodos dentro da classe AlunoTest existente
-
     // --- Testes de Aluno (Entidade) ---
 
     @Test
@@ -123,8 +131,8 @@ class AlunoTest {
     @Test
     void testConstrutorProtegidoAluno() {
         // Arrange & Act
-        Aluno aluno = new Aluno(); // Usado pelo JPA
-        aluno.setId(10L); // Apenas para teste
+        Aluno aluno = new Aluno();
+        aluno.setId(10L);
         
         // Assert
         assertNotNull(aluno);
@@ -135,12 +143,12 @@ class AlunoTest {
     void testEqualsAndHashCode() {
         // Arrange
         Aluno aluno1 = new Aluno(1L, "Aluno 1", "email1", StatusAluno.comCursos(1));
-        Aluno aluno2 = new Aluno(1L, "Aluno 2", "email2", StatusAluno.comCursos(2)); // Mesmo ID
-        Aluno aluno3 = new Aluno(2L, "Aluno 1", "email1", StatusAluno.comCursos(1)); // ID diferente
+        Aluno aluno2 = new Aluno(1L, "Aluno 2", "email2", StatusAluno.comCursos(2));
+        Aluno aluno3 = new Aluno(2L, "Aluno 1", "email1", StatusAluno.comCursos(1));
         
         // Assert
-        assertEquals(aluno1, aluno2); // Iguais pelo ID
-        assertNotEquals(aluno1, aluno3); // Diferentes pelo ID
+        assertEquals(aluno1, aluno2); // iguais pelo ID
+        assertNotEquals(aluno1, aluno3); // diferentes pelo ID
         assertEquals(aluno1.hashCode(), aluno2.hashCode());
         assertNotEquals(aluno1.hashCode(), aluno3.hashCode());
         
@@ -161,25 +169,25 @@ class AlunoTest {
         // Assert
         assertTrue(str.contains("id=1"));
         assertTrue(str.contains("nome=Aluno 1"));
-        assertFalse(str.contains("status=")); // Verificando o exclude
+        assertFalse(str.contains("status=")); // verificando o exclude
     }
 
     @Test
     void testGetCursosConcluidosComStatusNulo() {
         // Arrange
-        Aluno aluno = new Aluno(); // Status é nulo
+        Aluno aluno = new Aluno(); // status é nulo
         
         // Assert
         assertEquals(0, aluno.getCursosConcluidos());
     }
 
 
-    // --- Testes de StatusAluno (Value Object) ---
+    // Testes de StatusAluno (Value Object)
 
     @Test
     void testStatusAlunoConstrutorProtegido() {
-        // Arrange & Act
-        StatusAluno status = new StatusAluno(); // Usado pelo JPA
+        // Arrange e Act
+        StatusAluno status = new StatusAluno(); // JPA
         
         // Assert
         assertNotNull(status);
