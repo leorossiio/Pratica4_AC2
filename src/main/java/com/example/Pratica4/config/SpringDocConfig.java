@@ -1,3 +1,4 @@
+// src/main/java/com/example/Pratica4/config/SpringDocConfig.java
 package com.example.Pratica4.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
