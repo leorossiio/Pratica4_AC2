@@ -1,3 +1,5 @@
+// src/test/java/com/example/Pratica4/service/AlunoServiceTest.java
+
 package com.example.Pratica4.service;
 
 import com.example.Pratica4.domain.Aluno;
@@ -13,6 +15,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 import java.util.List;
+
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -116,5 +120,35 @@ class AlunoServiceTest {
         verify(alunoRepository, times(1)).save(aluno);
         assertEquals(12, aluno.getCursosConcluidos()); // Verifica se a rn foi chamada
         assertTrue(aluno.isPremium());
+    }
+
+    // Adicionar estes métodos dentro da classe AlunoServiceTest existente
+
+    @Test
+    void testRegistrarParticipacaoNoForum_NotFound() {
+        // Arrange
+        when(alunoRepository.findById(99L)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(RuntimeException.class, () -> {
+            alunoService.registrarParticipacaoNoForum(99L, "teste");
+        });
+
+        // Verifica se o save NUNCA foi chamado
+        verify(alunoRepository, never()).save(any(Aluno.class));
+    }
+
+    @Test
+    void testGetAllAlunos_EmptyList() {
+        // Arrange
+        when(alunoRepository.findAll()).thenReturn(List.of()); // Retorna lista vazia
+
+        // Act
+        List<AlunoResponseDTO> resultados = alunoService.getAllAlunos();
+
+        // Assert
+        assertTrue(resultados.isEmpty());
+        verify(alunoRepository, times(1)).findAll();
+        verify(alunoMapper, never()).toDTO(any(Aluno.class)); // Mapper não deve ser chamado
     }
 }

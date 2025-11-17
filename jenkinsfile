@@ -1,0 +1,117 @@
+// Este é o "Pipeline DEV" (Item 9)
+pipeline {
+    agent any
+
+    stages {
+        // Etapa 1: Baixar o código
+        stage('1. Checkout') {
+            steps {
+                echo 'Baixando o código do Git...'
+                checkout scm
+            }
+        }
+
+        // Etapa 2: Construir e Analisar (Item 12 - "Pipeline-test-dev")
+        // Aqui rodamos a build, testes unitários, Jacoco e PMD.
+        stage('2. Build, Test & Analyze') {
+            steps {
+                echo 'Construindo, rodando testes (JUNIT) e análise (Jacoco, PMD)...'
+                // Usamos 'bat' (Windows). Se seu Jenkins for Linux, mude para 'sh'
+                bat 'mvn clean verify pmd:pmd'
+            }
+            
+            // Item 9: Gerar e arquivar os relatórios
+            post {
+                always {
+                    echo 'Arquivando relatórios...'
+                    
+                    // 1. Relatório JUNIT (Testes)
+                    junit 'target/surefire-reports/*.xml'
+                    
+                    // 2. Relatório PMD (Qualidade Estática)
+                    publishHTML(target: [
+                        allowMissing: true,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'target/site',
+                        reportFiles: 'pmd.html',
+                        reportName: 'PMD Analysis'
+                    ])
+                    
+                    // 3. Relatório Jacoco (Cobertura)
+                    publishHTML(target: [
+                        allowMissing: true,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'target/site/jacoco',
+                        reportFiles: 'index.html',
+                        reportName: 'Jacoco Coverage'
+                    ])
+                    
+                    // Item 10: Garantir no Pipeline DEV Quality Gate de 99%.
+                    // Esta etapa LÊ o relatório do Jacoco e FALHA O BUILD se
+                    // a cobertura de INSTRUÇÕES for menor que 99.0%
+                    echo 'Verificando Quality Gate de 99% do Jacoco...'
+                    jacoco(
+                        execPattern: 'target/jacoco.exec',
+                        classPattern: 'target/classes',
+                        sourcePattern: 'src/main/java',
+                        minimumInstructionCoverage: '99.0', 
+                        failBuild: true // ESSENCIAL: Falha o build se < 99%
+                    )
+                }
+            }
+        }
+
+        // Etapa 3: Gerar Imagem Docker (Item 11 e 12)
+        // Item 12: Este é o "sub-pipeline" Image_Docker
+        // Item 11: Esta etapa SÓ RODA se a Etapa 2 (incluindo o Quality Gate) passar.
+        stage('3. Build & Push Docker Image') {
+            steps {
+                echo 'Quality Gate 99% ATINGIDO. Construindo imagem Docker...'
+                
+                // Usa o ID da credencial que você criou no Jenkins
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    
+                    // Define os nomes da imagem
+                    def dockerUser = 'leorossi123'
+                    def imageName = 'ac2_ca' // O nome da sua imagem
+                    def imageTagLatest = "${dockerUser}/${imageName}:latest"
+                    def imageTagBuild = "${dockerUser}/${imageName}:${env.BUILD_NUMBER}" // Ex: leorossi123/ac2_ca:42
+
+                    // 1. Constrói a imagem (usando o 'dockerfile' da raiz do projeto)
+                    bat "docker build -t ${imageTagLatest} -t ${imageTagBuild} ."
+
+                    // 2. Faz login no Docker Hub
+                    bat "echo ${env.DOCKER_PASS} | docker login -u ${env.DOCKER_USER} --password-stdin"
+                    
+                    // 3. Envia (push) a imagem para o Docker Hub
+                    echo "Enviando imagem ${imageTagLatest} para o Docker Hub..."
+                    bat "docker push ${imageTagLatest}"
+                    
+                    echo "Enviando imagem ${imageTagBuild} para o Docker Hub..."
+                    bat "docker push ${imageTagBuild}"
+                }
+            }
+            post {
+                always {
+                    // Sempre faz logout por segurança
+                    bat 'docker logout'
+                }
+            }
+        }
+    }
+
+    post {
+        // Bloco executado no final do pipeline
+        success {
+            echo 'Pipeline DEV CONCLUÍDO COM SUCESSO! Imagem Docker enviada.'
+            // Aqui você poderia adicionar um 'build job' para disparar
+            // o pipeline de staging (jenkinsfile.staging)
+        }
+        failure {
+            echo 'Pipeline DEV FALHOU.'
+            echo 'Pode ser um erro de build, falha em testes ou cobertura < 99%.'
+        }
+    }
+}

@@ -1,35 +1,35 @@
 pipeline {
-  agent any
+    agent any
 
-  stages {
-    stage('Checkout') {
-      steps {
-        checkout scm
-      }
-    }
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
 
-    stage('Start container') {
-      steps {
-        echo 'Starting container from Docker Hub...'
-        bat 'docker-compose -f docker-compose.staging.yml pull' // Baixa a imagem do Docker Hub
-        bat 'docker-compose -f docker-compose.staging.yml up -d --no-color'
-        sleep time: 60, unit: 'SECONDS' // Aumenta o tempo para o serviço Spring Boot iniciar
-        bat 'docker-compose -f docker-compose.staging.yml logs' // Verifica os logs para conferir o status do Spring Boot
-        bat 'docker-compose -f docker-compose.staging.yml ps' // Verifica o status do container
-      }
-    }
+        stage('Start container STAGING') {
+            steps {
+                echo 'Starting container from Docker Hub...'
+                // Correção: Usar o arquivo de staging
+                bat 'docker-compose -f docker-compose.staging.yml pull' 
+                bat 'docker-compose -f docker-compose.staging.yml up -d --no-color'
+                sleep time: 60, unit: 'SECONDS'
+                bat 'docker-compose -f docker-compose.staging.yml logs'
+                bat 'docker-compose -f docker-compose.staging.yml ps'
+            }
+        }
 
-    stage('Run tests against the container') {
-      steps {
-        bat 'curl http://localhost:8686 || echo "Service not responding"'
-      }
+        stage('Run tests against the container STAGING') {
+            steps {
+                // Correção: Usar a porta de staging
+                bat 'curl http://localhost:8686 || echo "Service not responding"'
+            }
+        }
     }
-  }
-
-  post {
-    always {
-      echo 'Pipeline completed'
-      // Não derruba mais o container aqui
+    post {
+        always {
+            echo 'Pipeline completed'
+        }
     }
-  }
 }

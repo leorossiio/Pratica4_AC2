@@ -1,3 +1,4 @@
+// src/main/java/com/example/Pratica4/controller/AlunoController.java
 package com.example.Pratica4.controller;
 
 import com.example.Pratica4.dto.AlunoRequestDTO;
