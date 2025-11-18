@@ -1,11 +1,11 @@
-// src/test/java/com/example/Pratica4/repository/AlunoRepositoryTest.java
 package com.example.Pratica4.repository;
 
-import com.example.Pratica4.domain.Aluno;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+
+import com.example.Pratica4.entity.Aluno;
 
 import static org.junit.jupiter.api.Assertions.*;
 

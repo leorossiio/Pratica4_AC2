@@ -1,5 +1,3 @@
-// src/test/java/com/example/Pratica4/controller/AlunoControllerTest.java
-
 package com.example.Pratica4.controller;
 
 import com.example.Pratica4.dto.AlunoRequestDTO;

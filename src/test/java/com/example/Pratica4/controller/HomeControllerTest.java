@@ -1,4 +1,3 @@
-// src/test/java/com/example/Pratica4/controller/HomeControllerTest.java
 package com.example.Pratica4.controller;
 
 import org.junit.jupiter.api.Test;

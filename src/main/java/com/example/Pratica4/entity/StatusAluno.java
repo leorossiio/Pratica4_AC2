@@ -1,5 +1,4 @@
-// src/main/java/com/example/Pratica4/domain/StatusAluno.java
-package com.example.Pratica4.domain;
+package com.example.Pratica4.entity;
 
 import jakarta.persistence.Embeddable;
 import lombok.EqualsAndHashCode;
@@ -22,17 +21,10 @@ public class StatusAluno {
         this.premium = this.cursosConcluidos >= 12;
     }
 
-    /**
-     * Método estático de fábrica: permite chamadas como StatusAluno.comCursos(6)
-     * (os testes do projeto usam essa forma).
-     */
     public static StatusAluno comCursos(int cursos) {
         return new StatusAluno(cursos);
     }
 
-    /**
-     * Método de instância para criar um novo Status acumulando cursos adicionais.
-     */
     public StatusAluno addCursos(int cursosAdicionais) {
         int total = Math.max(0, this.cursosConcluidos + cursosAdicionais);
         return new StatusAluno(total);

@@ -1,7 +1,7 @@
-// src/test/java/com/example/Pratica4/domain/AlunoDomainTest.java
-package com.example.Pratica4.domain;
+package com.example.Pratica4.entity;
 
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class AlunoTest {

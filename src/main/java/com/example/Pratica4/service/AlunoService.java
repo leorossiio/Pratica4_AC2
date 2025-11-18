@@ -1,10 +1,10 @@
 // src/main/java/com/example/Pratica4/service/AlunoService.java    
 package com.example.Pratica4.service;
 
-import com.example.Pratica4.domain.Aluno;
 import com.example.Pratica4.dto.AlunoMapper;
 import com.example.Pratica4.dto.AlunoRequestDTO;
 import com.example.Pratica4.dto.AlunoResponseDTO;
+import com.example.Pratica4.entity.Aluno;
 import com.example.Pratica4.repository.AlunoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -1,12 +1,8 @@
-// File: src/main/java/com/example/Pratica4/domain/Aluno.java
-package com.example.Pratica4.domain;
+package com.example.Pratica4.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
 
-/**
- * Entidade Aluno com validação no nome (lança IllegalArgumentException para null/empty)
- */
 @Entity
 @Table(name = "alunos")
 @Getter
@@ -41,9 +37,6 @@ public class Aluno {
         this.status = status;
     }
 
-    /**
-     * Setter com validação exigida pelos testes: nome não pode ser null/blank.
-     */
     public void setNome(String nome) {
         if (nome == null || nome.isBlank()) {
             throw new IllegalArgumentException("nome não pode ser nulo ou vazio");
@@ -51,27 +44,15 @@ public class Aluno {
         this.nome = nome;
     }
 
-    // O lombok ainda gera outros setters/getters (como setEmail) porque não existem aqui.
-    // Se lombok gerar setNome, ele não sobrescreverá este método porque já existe uma implementação.
-
-    /**
-     * Registra participação no fórum: incrementa 1 curso por participação (regra atual do domínio).
-     */
     public void registrarParticipacaoNoForum(String mensagem) {
         int atual = this.getCursosConcluidos();
         this.status = StatusAluno.comCursos(atual + 1);
     }
 
-    /**
-     * Conveniência para verificar se é premium.
-     */
     public boolean isPremium() {
         return this.status != null && this.status.isPremium();
     }
 
-    /**
-     * Conveniência para obter cursos concluídos a partir do status embutido.
-     */
     public int getCursosConcluidos() {
         return (this.status == null) ? 0 : this.status.getCursosConcluidos();
     }

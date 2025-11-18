@@ -1,4 +1,3 @@
-// src/main/java/com/example/Pratica4/Pratica4Application.java
 package com.example.Pratica4;
 
 import org.springframework.boot.SpringApplication;

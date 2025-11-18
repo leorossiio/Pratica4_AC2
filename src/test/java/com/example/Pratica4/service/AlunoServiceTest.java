@@ -1,11 +1,9 @@
-// src/test/java/com/example/Pratica4/service/AlunoServiceTest.java
-
 package com.example.Pratica4.service;
 
-import com.example.Pratica4.domain.Aluno;
 import com.example.Pratica4.dto.AlunoMapper;
 import com.example.Pratica4.dto.AlunoRequestDTO;
 import com.example.Pratica4.dto.AlunoResponseDTO;
+import com.example.Pratica4.entity.Aluno;
 import com.example.Pratica4.repository.AlunoRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

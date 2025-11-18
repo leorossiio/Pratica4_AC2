@@ -1,4 +1,3 @@
-// src/test/java/com/example/Pratica4/dto/AlunoDTOTest.java
 package com.example.Pratica4.dto;
 
 import org.junit.jupiter.api.Test;

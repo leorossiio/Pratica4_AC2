@@ -1,8 +1,9 @@
-// src/test/java/com/example/Pratica4/dto/AlunoMapperTest.java
 package com.example.Pratica4.dto;
 
-import com.example.Pratica4.domain.Aluno;
 import org.junit.jupiter.api.Test;
+
+import com.example.Pratica4.entity.Aluno;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class AlunoMapperTest {

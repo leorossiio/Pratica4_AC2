@@ -1,9 +1,9 @@
 // src/main/java/com/example/Pratica4/dto/AlunoMapper.java
 package com.example.Pratica4.dto;
 
-import com.example.Pratica4.domain.Aluno;
-
 import org.springframework.stereotype.Component;
+
+import com.example.Pratica4.entity.Aluno;
 
 
 @Component
