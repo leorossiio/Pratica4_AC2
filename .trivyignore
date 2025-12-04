@@ -1,0 +1,4 @@
+# Arquivo .trivyignore
+# Adicione aqui IDs de CVEs que você quer ignorar, se necessário
+# Exemplo (pode deixar vazio ou com este exemplo comentado):
+# CVE-2023-0000

@@ -1,4 +1,3 @@
-// Este é o "Pipeline DEV" (Item 9)
 pipeline {
     agent any
 
@@ -11,24 +10,19 @@ pipeline {
             }
         }
 
-        // Etapa 2: Construir e Analisar (Item 12 - "Pipeline-test-dev")
-        // Aqui rodamos a build, testes unitários, Jacoco e PMD.
+        // Etapa 2: Construir e Analisar
         stage('2. Build, Test & Analyze') {
             steps {
                 echo 'Construindo, rodando testes (JUNIT) e análise (Jacoco, PMD)...'
-                // Usamos 'bat' (Windows). Se seu Jenkins for Linux, mude para 'sh'
+                // Ajuste para 'sh' se estiver em Linux, ou mantenha 'bat' para Windows
                 bat 'mvn clean verify pmd:pmd'
             }
             
-            // Item 9: Gerar e arquivar os relatórios
             post {
                 always {
-                    echo 'Arquivando relatórios...'
-                    
-                    // 1. Relatório JUNIT (Testes)
+                    echo 'Arquivando relatórios de Qualidade...'
                     junit 'target/surefire-reports/*.xml'
                     
-                    // 2. Relatório PMD (Qualidade Estática)
                     publishHTML(target: [
                         allowMissing: true,
                         alwaysLinkToLastBuild: true,
@@ -38,7 +32,6 @@ pipeline {
                         reportName: 'PMD Analysis'
                     ])
                     
-                    // 3. Relatório Jacoco (Cobertura)
                     publishHTML(target: [
                         allowMissing: true,
                         alwaysLinkToLastBuild: true,
@@ -48,44 +41,59 @@ pipeline {
                         reportName: 'Jacoco Coverage'
                     ])
                     
-                    // Item 10: Garantir no Pipeline DEV Quality Gate de 99%.
-                    // Esta etapa LÊ o relatório do Jacoco e FALHA O BUILD se
-                    // a cobertura de INSTRUÇÕES for menor que 99.0%
                     echo 'Verificando Quality Gate de 99% do Jacoco...'
                     jacoco(
                         execPattern: 'target/jacoco.exec',
                         classPattern: 'target/classes',
                         sourcePattern: 'src/main/java',
                         minimumInstructionCoverage: '99.0', 
-                        failBuild: true // ESSENCIAL: Falha o build se < 99%
+                        failBuild: true 
                     )
                 }
             }
         }
 
-        // Etapa 3: Gerar Imagem Docker (Item 11 e 12)
-        // Item 12: Este é o "sub-pipeline" Image_Docker
-        // Item 11: Esta etapa SÓ RODA se a Etapa 2 (incluindo o Quality Gate) passar.
-        stage('3. Build & Push Docker Image') {
+        // --- NOVA ETAPA: TRIVY FILESYSTEM (DEVSECOPS) ---
+        // Analisa o código fonte antes de empacotar
+        stage('2.5. Security Scan - FS (Trivy)') {
             steps {
-                echo 'Quality Gate 99% ATINGIDO. Construindo imagem Docker...'
+                echo 'Iniciando varredura de segurança no código (Filesystem)...'
+                // --exit-code 1: Falha o pipeline se achar erro CRÍTICO
+                bat 'trivy fs --exit-code 1 --severity HIGH,CRITICAL --format table --output trivy-fs-report.txt .'
                 
-                // Usa o ID da credencial que você criou no Jenkins
+                // Arquiva o relatório para prova
+                archiveArtifacts artifacts: 'trivy-fs-report.txt', onlyIfSuccessful: false
+            }
+        }
+
+        // Etapa 3: Gerar Imagem, Escanear e Push
+        stage('3. Build, Scan & Push Docker Image') {
+            steps {
+                echo 'Quality Gates Aprovados. Iniciando Build Docker...'
+                
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     
-                    // Define os nomes da imagem
                     def dockerUser = 'leorossi123'
-                    def imageName = 'ac2_ca' // O nome da sua imagem
+                    def imageName = 'ac2_ca'
                     def imageTagLatest = "${dockerUser}/${imageName}:latest"
-                    def imageTagBuild = "${dockerUser}/${imageName}:${env.BUILD_NUMBER}" // Ex: leorossi123/ac2_ca:42
+                    def imageTagBuild = "${dockerUser}/${imageName}:${env.BUILD_NUMBER}"
 
-                    // 1. Constrói a imagem (usando o 'dockerfile' da raiz do projeto)
+                    // 1. Constrói a imagem
                     bat "docker build -t ${imageTagLatest} -t ${imageTagBuild} ."
+
+                    // --- NOVO PASSO: TRIVY IMAGE SCAN (DEVSECOPS) ---
+                    // Analisa a imagem recém criada antes de enviar para o Hub
+                    echo 'Iniciando varredura de segurança na Imagem Docker...'
+                    bat "trivy image --exit-code 1 --severity HIGH,CRITICAL --format table --output trivy-image-report.txt ${imageTagLatest}"
+                    
+                    // Arquiva o relatório da imagem
+                    archiveArtifacts artifacts: 'trivy-image-report.txt', onlyIfSuccessful: false
+                    // ------------------------------------------------
 
                     // 2. Faz login no Docker Hub
                     bat "echo ${env.DOCKER_PASS} | docker login -u ${env.DOCKER_USER} --password-stdin"
                     
-                    // 3. Envia (push) a imagem para o Docker Hub
+                    // 3. Envia (push) a imagem
                     echo "Enviando imagem ${imageTagLatest} para o Docker Hub..."
                     bat "docker push ${imageTagLatest}"
                     
@@ -95,7 +103,6 @@ pipeline {
             }
             post {
                 always {
-                    // Sempre faz logout por segurança
                     bat 'docker logout'
                 }
             }
@@ -103,15 +110,11 @@ pipeline {
     }
 
     post {
-        // Bloco executado no final do pipeline
         success {
-            echo 'Pipeline DEV CONCLUÍDO COM SUCESSO! Imagem Docker enviada.'
-            // Aqui você poderia adicionar um 'build job' para disparar
-            // o pipeline de staging (jenkinsfile.staging)
+            echo 'Pipeline DevSecOps CONCLUÍDO! Aplicação segura e entregue.'
         }
         failure {
-            echo 'Pipeline DEV FALHOU.'
-            echo 'Pode ser um erro de build, falha em testes ou cobertura < 99%.'
+            echo 'Pipeline FALHOU. Verifique Testes, Cobertura ou Vulnerabilidades de Segurança (Trivy).'
         }
     }
 }
