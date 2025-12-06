@@ -50,10 +50,13 @@ pipeline {
             }
         }
 
+        // --- MUDANÇA AQUI: TRIVY RODANDO VIA DOCKER ---
         stage('2.5. Security Scan - FS (Trivy)') {
             steps {
-                echo 'Iniciando varredura de segurança no código (Filesystem)...'
-                bat 'trivy fs --exit-code 1 --severity HIGH,CRITICAL --format table --output trivy-fs-report.txt .'
+                echo 'Iniciando varredura de segurança no código (Filesystem via Docker)...'
+                // Montamos o %WORKSPACE% do Windows dentro da pasta /src do container
+                bat 'docker run --rm -v "%WORKSPACE%":/src get.trivy.dev/image/trivy:0.68.1 fs --exit-code 1 --severity HIGH,CRITICAL --format table /src > trivy-fs-report.txt'
+                
                 archiveArtifacts artifacts: 'trivy-fs-report.txt', onlyIfSuccessful: false
             }
         }
@@ -69,11 +72,14 @@ pipeline {
                     def imageTagLatest = "${dockerUser}/${imageName}:latest"
                     def imageTagBuild = "${dockerUser}/${imageName}:${env.BUILD_NUMBER}"
 
+                    // Separando o build e o tag para evitar erros no Windows
                     bat "docker build -t ${imageTagLatest} ."
                     bat "docker tag ${imageTagLatest} ${imageTagBuild}"
 
+                    // --- MUDANÇA AQUI: TRIVY RODANDO VIA DOCKER ---
                     echo 'Iniciando varredura de segurança na Imagem Docker...'
-                    bat "trivy image --exit-code 1 --severity HIGH,CRITICAL --format table --output trivy-image-report.txt ${imageTagLatest}"
+                    // Montamos o socket do docker para o Trivy conseguir ver a imagem que acabamos de criar
+                    bat "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock get.trivy.dev/image/trivy:0.68.1 image --exit-code 1 --severity HIGH,CRITICAL --format table ${imageTagLatest} > trivy-image-report.txt"
                     
                     archiveArtifacts artifacts: 'trivy-image-report.txt', onlyIfSuccessful: false
 
