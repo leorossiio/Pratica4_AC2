@@ -69,7 +69,8 @@ pipeline {
                     def imageTagLatest = "${dockerUser}/${imageName}:latest"
                     def imageTagBuild = "${dockerUser}/${imageName}:${env.BUILD_NUMBER}"
 
-                    bat "docker build -t ${imageTagLatest} -t ${imageTagBuild} ."
+                    bat "docker build -t ${imageTagLatest} ."
+                    bat "docker tag ${imageTagLatest} ${imageTagBuild}"
 
                     echo 'Iniciando varredura de segurança na Imagem Docker...'
                     bat "trivy image --exit-code 1 --severity HIGH,CRITICAL --format table --output trivy-image-report.txt ${imageTagLatest}"
