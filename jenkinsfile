@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     stages {
-        // Etapa 1: Baixar o código
         stage('1. Checkout') {
             steps {
                 echo 'Baixando o código do Git...'
@@ -10,11 +9,9 @@ pipeline {
             }
         }
 
-        // Etapa 2: Construir e Analisar
         stage('2. Build, Test & Analyze') {
             steps {
                 echo 'Construindo, rodando testes (JUNIT) e análise (Jacoco, PMD)...'
-                // Ajuste para 'sh' se estiver em Linux, ou mantenha 'bat' para Windows
                 bat 'mvn clean verify pmd:pmd'
             }
             
@@ -46,27 +43,21 @@ pipeline {
                         execPattern: 'target/jacoco.exec',
                         classPattern: 'target/classes',
                         sourcePattern: 'src/main/java',
-                        minimumInstructionCoverage: '99.0', 
-                        failBuild: true 
+                        minimumInstructionCoverage: '99.0',
+                        failBuild: true
                     )
                 }
             }
         }
 
-        // --- NOVA ETAPA: TRIVY FILESYSTEM (DEVSECOPS) ---
-        // Analisa o código fonte antes de empacotar
         stage('2.5. Security Scan - FS (Trivy)') {
             steps {
                 echo 'Iniciando varredura de segurança no código (Filesystem)...'
-                // --exit-code 1: Falha o pipeline se achar erro CRÍTICO
                 bat 'trivy fs --exit-code 1 --severity HIGH,CRITICAL --format table --output trivy-fs-report.txt .'
-                
-                // Arquiva o relatório para prova
                 archiveArtifacts artifacts: 'trivy-fs-report.txt', onlyIfSuccessful: false
             }
         }
 
-        // Etapa 3: Gerar Imagem, Escanear e Push
         stage('3. Build, Scan & Push Docker Image') {
             steps {
                 echo 'Quality Gates Aprovados. Iniciando Build Docker...'
@@ -78,22 +69,15 @@ pipeline {
                     def imageTagLatest = "${dockerUser}/${imageName}:latest"
                     def imageTagBuild = "${dockerUser}/${imageName}:${env.BUILD_NUMBER}"
 
-                    // 1. Constrói a imagem
                     bat "docker build -t ${imageTagLatest} -t ${imageTagBuild} ."
 
-                    // --- NOVO PASSO: TRIVY IMAGE SCAN (DEVSECOPS) ---
-                    // Analisa a imagem recém criada antes de enviar para o Hub
                     echo 'Iniciando varredura de segurança na Imagem Docker...'
                     bat "trivy image --exit-code 1 --severity HIGH,CRITICAL --format table --output trivy-image-report.txt ${imageTagLatest}"
                     
-                    // Arquiva o relatório da imagem
                     archiveArtifacts artifacts: 'trivy-image-report.txt', onlyIfSuccessful: false
-                    // ------------------------------------------------
 
-                    // 2. Faz login no Docker Hub
                     bat "echo ${env.DOCKER_PASS} | docker login -u ${env.DOCKER_USER} --password-stdin"
                     
-                    // 3. Envia (push) a imagem
                     echo "Enviando imagem ${imageTagLatest} para o Docker Hub..."
                     bat "docker push ${imageTagLatest}"
                     
